@@ -73,7 +73,6 @@ def addSp():
         return redirect(url_for('admin'))
     
     return render_template('sanpham/addsp.html', form=form, title="Thêm sản phẩm", categories=categories)
-
 @app.route('/deletesp/<int:id>',methods=['POST'])
 def deletesp(id):
     deletesp= addsp.query.get_or_404(id)
@@ -88,3 +87,30 @@ def deletesp(id):
         return redirect(url_for('admin'))
     flash(f'The category {deletesp.name} cant be delete','fail')
     return redirect(url_for('admin'))
+#nhân bắt đầu làm#
+@app.route('/updateSp/<int:id>', methods=['GET', 'POST'])
+def updateSp(id):
+    categories = Category.query.all()
+    sp = addsp.query.get_or_404(id)
+    form = Addsp(request.form)
+    category = request.form.get('category')
+    if request.method == "POST":
+        sp.name = form.name.data
+        sp.price = form.price.data
+        sp.decs = form.discription.data
+        sp.category_id = category
+        if request.files.get('image'):
+            try:
+                os.unlink(os.path.join(current_app.root_path, "static/images/" + sp.image)) #xoá ảnh khỏi thư mục images
+                sp.image = photos.save(request.files.get('image'), name=secrets.token_hex(10)+ ".") #tải lên hình ảnh mới
+            except:
+                sp.image = photos.save(request.files.get('image'), name=secrets.token_hex(10)+ ".") #tải ảnh mới lên
+
+        db.session.commit()
+        flash(f'Sản phẩm đã được cập nhật', 'success')
+        return redirect(url_for('admin'))
+    form.name.data = sp.name
+    form.price.data = sp.price
+    form.discription.data = sp.decs
+    return render_template('sanpham/updatesp.html', form=form, categories=categories, sanpham=sp)
+#...#
